@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Scratch &amp; Pray</title>
+<meta name="theme-color" content="#1a0f2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Special+Elite&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a0f2e;
+    --bg2: #2b1650;
+    --gold: #f5c542;
+    --gold2: #ffe9a3;
+    --pink: #ff4fa3;
+    --ink: #fff8e7;
+    --muted: #c9b8e8;
+    --paper: #fff6dc;
+    --paper-ink: #2a1a08;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg) 60%) fixed, var(--bg);
+    color: var(--ink);
+    font-family: Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  }
+  body::before { /* candle-glow rays */
+    content: ""; position: fixed; inset: -50%; z-index: -1; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(245,197,66,.05) 0 6deg, transparent 6deg 18deg);
+    animation: spin 120s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .screen { display: none; min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px 0; }
+  .screen.active { display: flex; }
+
+  /* ── Pray screen ─────────────────────────────── */
+  .logo { font-family: 'Bungee Shade', 'Bungee', cursive; font-size: clamp(44px, 13vw, 76px); line-height: .9; text-align: center; color: var(--gold); text-shadow: 0 0 24px rgba(245,197,66,.45); margin: 0; }
+  .logo small { display: block; font-family: Bungee, cursive; font-size: .28em; letter-spacing: .12em; color: var(--pink); text-shadow: none; margin-top: 10px; }
+  .tag { color: var(--muted); text-align: center; max-width: 34ch; margin: 0; font-size: 15px; line-height: 1.45; }
+  .card { width: min(100%, 440px); background: rgba(255,255,255,.06); border: 1px solid rgba(245,197,66,.3); border-radius: 18px; padding: 16px; backdrop-filter: blur(6px); }
+  label { font-family: Bungee, cursive; font-size: 13px; letter-spacing: .08em; color: var(--gold2); }
+  textarea { width: 100%; min-height: 110px; margin-top: 8px; resize: none; border-radius: 12px; border: 1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.35); color: var(--ink); padding: 12px; font: 16px/1.4 Inter, sans-serif; }
+  textarea:focus { outline: 2px solid var(--gold); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { border: 1px solid rgba(245,197,66,.4); background: transparent; color: var(--gold2); border-radius: 999px; padding: 6px 12px; font: 600 13px Inter, sans-serif; cursor: pointer; }
+  .chip:active { background: rgba(245,197,66,.2); }
+  .btn { width: min(100%, 440px); border: 0; border-radius: 14px; padding: 16px; cursor: pointer; font-family: Bungee, cursive; font-size: 20px; letter-spacing: .04em; color: #2a1505; background: linear-gradient(180deg, var(--gold2), var(--gold) 55%, #d99a1c); box-shadow: 0 6px 0 #8a5a0c, 0 10px 30px rgba(245,197,66,.35); transition: transform .08s; }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a5a0c; }
+  .btn:disabled { opacity: .5; }
+  .btn.ghost { background: transparent; color: var(--gold2); border: 2px solid var(--gold); box-shadow: none; font-size: 16px; padding: 12px; }
+  .legal { font-family: 'Special Elite', monospace; font-size: 11px; color: rgba(201,184,232,.6); text-align: center; max-width: 44ch; margin: 0; }
+
+  /* ── Loading ─────────────────────────────────── */
+  .candle { font-size: 72px; animation: flicker 1.4s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(245,197,66,.8)); }
+  @keyframes flicker { 0%,100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.06) rotate(2deg); } }
+  .loading-msg { font-family: Bungee, cursive; color: var(--gold2); text-align: center; min-height: 2.6em; max-width: 26ch; }
+  .bar { width: min(80%, 320px); height: 8px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--pink), var(--gold)); transition: width .5s; }
+
+  /* ── Ticket ──────────────────────────────────── */
+  #play { justify-content: flex-start; gap: 14px; }
+  .prayer-stub { font-family: 'Special Elite', monospace; font-size: 13px; color: var(--muted); text-align: center; max-width: 40ch; margin: 0; }
+  .ticket {
+    position: relative; container-type: inline-size;
+    width: min(100%, calc((100dvh - 150px) * 2 / 3), 460px);
+    aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.1);
+    background: var(--fallback-bg, linear-gradient(160deg, #6b1fb1, #ff4fa3 45%, #f5c542));
+    user-select: none; -webkit-user-select: none; touch-action: none;
+    animation: deal .7s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes deal { from { transform: translateY(40px) rotate(-6deg) scale(.9); opacity: 0; } }
+  .ticket > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .fallback-title { position: absolute; top: 6%; left: 0; right: 0; text-align: center; font-family: 'Bungee Shade', cursive; color: #fff; font-size: 10cqw; line-height: .95; text-shadow: 0 3px 0 #6b1fb1; }
+  .fallback-title small { display: block; font-family: Bungee, cursive; font-size: .5em; color: var(--gold2); }
+  .panel, #scratch { position: absolute; left: var(--wx, 12%); top: var(--wy, 41%); width: var(--ww, 76%); height: var(--wh, 37%); border-radius: 3cqw; }
+  .ticket.has-art { background: #120a20; }
+  .panel {
+    background: radial-gradient(circle at 50% 30%, #fffdf3, var(--paper));
+    color: var(--paper-ink); box-shadow: inset 0 0 0 .8cqw var(--gold), inset 0 0 0 1.4cqw #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    padding: 4cqw 5cqw; gap: 2cqw; overflow: hidden;
+  }
+  .panel .symbols { font-size: 8cqw; letter-spacing: 2cqw; line-height: 1; }
+  .panel .headline { font-family: Bungee, cursive; font-size: 8cqw; color: #c2185b; line-height: 1; }
+  .panel.jackpot .headline { color: #b8860b; text-shadow: 0 0 2cqw rgba(245,197,66,.8); }
+  .panel .prize { font-family: Bungee, cursive; font-size: 5.8cqw; line-height: 1.1; }
+  .desc-out { font-size: 16px; line-height: 1.45; margin: 0; }
+  #scratch { cursor: crosshair; transition: opacity .6s; }
+  #scratch.gone { opacity: 0; pointer-events: none; }
+  .hint { font-family: Bungee, cursive; color: var(--gold2); font-size: 14px; letter-spacing: .06em; animation: pulse 1.6s infinite; margin: 0; }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  .result { width: min(100%, 460px); display: none; flex-direction: column; gap: 12px; }
+  .result.show { display: flex; animation: deal .5s ease-out; }
+  .fine { font-family: 'Special Elite', monospace; font-size: 12px; color: var(--muted); margin: 0; }
+  .real { background: rgba(255,255,255,.08); border-left: 4px solid var(--gold); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.4; margin: 0; }
+  .real b { font-family: Bungee, cursive; font-weight: 400; color: var(--gold2); font-size: 12px; letter-spacing: .06em; display: block; margin-bottom: 4px; }
+  .real.crisis { border-color: var(--pink); }
+  .row { display: flex; gap: 10px; }
+  .row .btn { flex: 1; font-size: 16px; padding: 14px 8px; }
+  .stats { font-family: 'Special Elite', monospace; font-size: 11px; color: rgba(201,184,232,.55); text-align: center; margin: 0; }
+  .err { color: #ffb4c8; text-align: center; max-width: 40ch; }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+</style>
+</head>
+<body>
+
+<section id="pray" class="screen active">
+  <h1 class="logo">Scratch<br>&amp; Pray<small>THE NYC LOTTERY FOR BASIC NEEDS</small></h1>
+  <p class="tag">Why wait in line, fill out forms, or call 311 forty times? Tell us what you need. Scratch. Hope.</p>
+  <div class="card">
+    <label for="prayer">YOUR PRAYER</label>
+    <textarea id="prayer" maxlength="500" placeholder="Dear City, I need…"></textarea>
+    <div class="chips" id="chips"></div>
+  </div>
+  <button class="btn" id="go">🙏 BUY TICKET · $0 🙏</button>
+  <p class="legal">Odds of winning what you actually need: 1 in 10 (generous, honestly). Prizes not redeemable for cash, dignity, or a callback. A satire.</p>
+</section>
+
+<section id="loading" class="screen">
+  <div class="candle">🕯️</div>
+  <div class="loading-msg" id="loadingMsg">Lighting a candle…</div>
+  <div class="bar"><i id="bar"></i></div>
+</section>
+
+<section id="play" class="screen">
+  <p class="prayer-stub" id="stub"></p>
+  <div class="ticket" id="ticket">
+    <div class="panel" id="panel">
+      <div class="symbols" id="symbols"></div>
+      <div class="headline" id="headline"></div>
+      <div class="prize" id="prize"></div>
+    </div>
+    <canvas id="scratch"></canvas>
+  </div>
+  <p class="hint" id="hint">☝️ SCRATCH THE SILVER ☝️</p>
+  <div class="result" id="result">
+    <p class="desc-out" id="desc"></p>
+    <p class="fine" id="fine"></p>
+    <p class="real" id="real"></p>
+    <div class="row">
+      <button class="btn ghost" id="share">SHARE</button>
+      <button class="btn" id="again">PRAY AGAIN</button>
+    </div>
+    <p class="stats" id="stats"></p>
+  </div>
+</section>
+
+<canvas id="confetti"></canvas>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PRESETS = [
+  ['🍕 Food', "I haven't eaten a real meal in three days and my SNAP got cut."],
+  ['🏠 Housing', 'My landlord is evicting me and I have nowhere to go.'],
+  ['🏥 Health', 'I need surgery on my knee and I have no insurance.'],
+  ['🛂 Green card', 'I need a green card so I can stop living in fear.'],
+  ['🎓 Loans', "Please forgive my $87,000 in student loans."],
+  ['👶 Childcare', 'I need affordable daycare so I can keep my job.'],
+  ['🚇 MTA', 'I just want the F train to show up on time once.'],
+];
+const LOADING = [
+  'Lighting a candle…', 'Submitting your prayer to the Board of Estimate…', 'Placing you on hold with 311…',
+  'Checking your eligibility for eligibility…', 'Consulting the Rent Guidelines Board…', 'Printing ticket on recycled forms…',
+  'Asking the bodega cat for a blessing…', 'Waiting for the F train…', 'Notarizing your hope…', 'Applying holy foil…',
+];
+
+const params = new URLSearchParams(location.search);
+for (const [label, text] of PRESETS) {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = label;
+  b.onclick = () => { $('prayer').value = text; $('prayer').focus(); };
+  $('chips').append(b);
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+}
+
+let loadTimer;
+function startLoading() {
+  show('loading');
+  let i = 0, pct = 4;
+  $('loadingMsg').textContent = LOADING[0]; $('bar').style.width = '4%';
+  loadTimer = setInterval(() => {
+    i = (i + 1) % LOADING.length; pct = Math.min(94, pct + (100 - pct) * 0.12);
+    $('loadingMsg').textContent = LOADING[i]; $('bar').style.width = pct + '%';
+  }, 2200);
+}
+
+let current = null;
+$('go').onclick = async () => {
+  const prayer = $('prayer').value.trim();
+  if (!prayer) { $('prayer').focus(); $('prayer').placeholder = 'God helps those who type something first…'; return; }
+  startLoading();
+  try {
+    const q = params.get('force') ? `?force=${params.get('force')}` : '';
+    const r = await fetch('/api/pray' + q, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prayer, art: params.get('art') !== '0' }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'The city is closed.');
+    current = data;
+    const art = data.image ? await preload(data.image) : null;
+    renderTicket(data, art);
+  } catch (e) {
+    show('pray');
+    $('go').insertAdjacentHTML('afterend', `<p class="err">Your prayer bounced: ${e.message}</p>`);
+  } finally { clearInterval(loadTimer); }
+};
+
+function preload(src) {
+  return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+}
+
+// Find the blank scratch window the image model painted (flat or transparent region),
+// since its position drifts between generations. Returns fractions of the image, or null.
+function findWindow(img) {
+  const w = 80, h = 120, c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const lum = (x, y) => { const i = (y * w + x) * 4; return px[i + 3] < 20 ? -1 : px[i] * .3 + px[i + 1] * .59 + px[i + 2] * .11; };
+  const blank = (x, y) => {
+    const l = lum(x, y); if (l < 0) return true;
+    const r = lum(Math.min(w - 1, x + 1), y), d = lum(x, Math.min(h - 1, y + 1));
+    return Math.abs(l - (r < 0 ? l : r)) + Math.abs(l - (d < 0 ? l : d)) < 7;
+  };
+  const rowScore = (y) => { let n = 0; for (let x = w * .3 | 0; x < w * .7; x++) n += blank(x, y); return n / (w * .4); };
+  let best = [0, 0], run = 0;
+  for (let y = h * .15 | 0; y < h * .92; y++) {
+    run = rowScore(y) > .85 ? run + 1 : 0;
+    if (run > best[1] - best[0]) best = [y - run + 1, y + 1];
+  }
+  const [top, bot] = best;
+  if ((bot - top) / h < .2) return null;
+  const colScore = (x) => { let n = 0; for (let y = top; y < bot; y++) n += blank(x, y); return n / (bot - top); };
+  let l = w / 2 | 0, r = w / 2 | 0;
+  while (l > 0 && colScore(l - 1) > .8) l--;
+  while (r < w - 1 && colScore(r + 1) > .8) r++;
+  if ((r - l) / w < .45) return null;
+  const pad = .012;
+  return { x: l / w + pad, y: top / h + pad, w: (r - l + 1) / w - 2 * pad, h: (bot - top) / h - 2 * pad };
+}
+
+function renderTicket(d, art) {
+  const t = d.ticket;
+  const ticket = $('ticket');
+  ticket.querySelectorAll('img, .fallback-title').forEach((n) => n.remove());
+  const win = art && findWindow(art);
+  for (const [k, v] of Object.entries({ wx: win?.x, wy: win?.y, ww: win?.w, wh: win?.h })) {
+    if (v == null) ticket.style.removeProperty('--' + k); else ticket.style.setProperty('--' + k, (v * 100).toFixed(2) + '%');
+  }
+  ticket.classList.toggle('has-art', !!art);
+  console.log('[ticket] window', win);
+  if (art) {
+    art.alt = '';
+    ticket.prepend(art);
+  } else {
+    ticket.insertAdjacentHTML('afterbegin', `<div class="fallback-title">SCRATCH &amp; PRAY<small>${esc(t.game_name)}</small></div>`);
+  }
+  $('stub').textContent = `“${d.prayer}”`;
+  $('symbols').textContent = t.symbols.slice(0, 3).join('');
+  $('headline').textContent = t.headline;
+  $('prize').textContent = t.prize;
+  $('desc').textContent = t.description;
+  $('panel').classList.toggle('jackpot', d.jackpot);
+  $('fine').textContent = '*' + t.fine_print;
+  $('real').className = 'real' + (t.crisis ? ' crisis' : '');
+  $('real').innerHTML = t.crisis
+    ? `<b>FOR REAL, THOUGH</b>You matter. Call or text <strong>988</strong> (Suicide &amp; Crisis Lifeline), any time. ${esc(t.real_help)}`
+    : `<b>${d.jackpot ? 'NOW MAKE IT REAL' : 'FOR REAL, THOUGH'}</b>${esc(t.real_help)}`;
+  $('stats').textContent = `ticket #${d.id.slice(-6)} · ${d.jackpot ? 'JACKPOT' : 'monkey’s paw'} · ${(d.timings.total / 1000).toFixed(1)}s${d.budgetExhausted ? ' · today’s art budget is spent, like every other budget' : ''}`;
+  $('result').classList.remove('show');
+  $('hint').style.display = '';
+  show('play');
+  requestAnimationFrame(() => { fitPrize(); setupScratch(d); });
+}
+
+// Shrink the prize text until the panel stops overflowing.
+function fitPrize() {
+  const panel = $('panel'), prize = $('prize');
+  let size = 5.8;
+  prize.style.fontSize = size + 'cqw';
+  while (panel.scrollHeight > panel.clientHeight + 1 && size > 3) {
+    size -= 0.2; prize.style.fontSize = size + 'cqw';
+  }
+}
+
+// ── Scratch layer ──────────────────────────────────────────
+let scratchCleanup = null;
+function setupScratch(d) {
+  scratchCleanup?.();
+  const cv = $('scratch');
+  cv.classList.remove('gone');
+  const rect = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(rect.width * dpr); cv.height = Math.round(rect.height * dpr);
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const W = cv.width, H = cv.height;
+
+  // Silver foil: metallic gradient + noise + repeating legend
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  ['#8e9399', '#e6e9ec', '#a7acb2', '#f4f6f8', '#8f949a', '#d5d9dd'].forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const img = ctx.getImageData(0, 0, W, H);
+  for (let i = 0; i < img.data.length; i += 4) { const n = (Math.random() - .5) * 28; img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n; }
+  ctx.putImageData(img, 0, 0);
+  ctx.save();
+  ctx.translate(W / 2, H / 2); ctx.rotate(-0.35);
+  ctx.fillStyle = 'rgba(70,74,80,.18)';
+  ctx.font = `${Math.round(W * .05)}px Bungee, sans-serif`; ctx.textAlign = 'center';
+  for (let y = -H; y < H; y += W * .09) for (let x = -W; x < W; x += W * .62) ctx.fillText('SCRATCH & PRAY ✦', x + (y / (W * .09) % 2) * W * .31, y);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(40,44,50,.75)'; ctx.textAlign = 'center';
+  ctx.font = `${Math.round(W * .085)}px Bungee, sans-serif`;
+  ctx.fillText('SCRATCH HERE', W / 2, H / 2 - W * .02);
+  ctx.font = `${Math.round(W * .12)}px serif`;
+  ctx.fillText('🙏', W / 2, H / 2 + W * .13);
+  const r = W * 0.03; // rounded corners
+  ctx.globalCompositeOperation = 'destination-out';
+  roundCornerMask(ctx, W, H, r);
+
+  ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.lineWidth = W * 0.11;
+  let last = null, moves = 0, done = false;
+
+  const pt = (e) => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) * dpr, (e.clientY - b.top) * dpr]; };
+  const down = (e) => { cv.setPointerCapture(e.pointerId); last = pt(e); scratch(last, last); audio.start(); };
+  const move = (e) => {
+    if (!last || done) return;
+    const p = pt(e); scratch(last, p);
+    audio.rub(Math.hypot(p[0] - last[0], p[1] - last[1]) / dpr);
+    last = p;
+    if (++moves % 12 === 0 && cleared() > 0.55) finish();
+  };
+  const up = () => { last = null; audio.stop(); if (!done && cleared() > 0.55) finish(); };
+  function scratch(a, b) { ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }
+  function cleared() {
+    const data = ctx.getImageData(0, 0, W, H).data; let clear = 0, n = 0;
+    for (let i = 3; i < data.length; i += 4 * 32) { n++; if (data[i] < 64) clear++; }
+    return clear / n;
+  }
+  function finish() {
+    done = true; audio.stop(); cv.classList.add('gone'); $('hint').style.display = 'none';
+    setTimeout(() => { $('result').classList.add('show'); if (d.jackpot) confetti(); navigator.vibrate?.(d.jackpot ? [80, 60, 80, 60, 200] : 40); }, 500);
+  }
+  cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move);
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  scratchCleanup = () => { cv.removeEventListener('pointerdown', down); cv.removeEventListener('pointermove', move); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up); };
+}
+function roundCornerMask(ctx, W, H, r) {
+  ctx.beginPath();
+  ctx.rect(0, 0, W, H);
+  ctx.roundRect(0, 0, W, H, r);
+  ctx.fill('evenodd');
+}
+
+// Scratchy foil sound: looping filtered noise whose gain follows finger speed.
+const audio = (() => {
+  let ac, gain;
+  return {
+    start() {
+      if (!ac) {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), ch = buf.getChannelData(0);
+        for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+        const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3200; f.Q.value = .8;
+        gain = ac.createGain(); gain.gain.value = 0;
+        src.connect(f).connect(gain).connect(ac.destination); src.start();
+      }
+      ac.resume();
+    },
+    rub(speed) { if (gain) gain.gain.setTargetAtTime(Math.min(.25, speed / 120), ac.currentTime, .02); },
+    stop() { if (gain) gain.gain.setTargetAtTime(0, ac.currentTime, .05); },
+  };
+})();
+
+function confetti() {
+  const cv = $('confetti'), ctx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const colors = ['#f5c542', '#ff4fa3', '#7cf', '#fff', '#9f6'];
+  const parts = Array.from({ length: 180 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height, vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 4, r: Math.random() * 6.28, s: 5 + Math.random() * 7, c: colors[Math.floor(Math.random() * colors.length)] }));
+  let frames = 0;
+  (function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const p of parts) { p.x += p.vx; p.y += p.vy; p.r += .1; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); }
+    if (++frames < 360) requestAnimationFrame(tick); else ctx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+
+$('again').onclick = () => { $('prayer').value = ''; document.querySelectorAll('.err').forEach((n) => n.remove()); show('pray'); };
+$('share').onclick = async () => {
+  const t = current.ticket;
+  const text = `I prayed: "${current.prayer}"\nI won: ${t.prize} 🙏 #ScratchAndPray`;
+  if (navigator.share) navigator.share({ title: 'Scratch & Pray', text, url: location.origin }).catch(() => {});
+  else { await navigator.clipboard.writeText(text); $('share').textContent = 'COPIED'; setTimeout(() => ($('share').textContent = 'SHARE'), 1500); }
+};
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+// Dev: ?replay=<ticket id> re-renders a saved ticket from /generated without spending API calls.
+if (params.get('replay')) {
+  fetch(`/generated/${params.get('replay')}.json`).then((r) => r.json()).then(async (data) => {
+    current = data;
+    renderTicket(data, data.image ? await preload(data.image) : null);
+  });
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>

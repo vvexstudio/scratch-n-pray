@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "scratch-and-pray", "runtimeExecutable": "node", "runtimeArgs": ["--watch", "server.js"], "port": 5177 }
+  ]
+}

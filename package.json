@@ -1,0 +1,16 @@
+{
+  "name": "scratch-and-pray",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A satirical scratch-off lottery for basic human needs.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "cf:dev": "wrangler pages dev --port 8788",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  }
+}

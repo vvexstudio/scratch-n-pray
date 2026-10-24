@@ -1,0 +1,24 @@
+# Cloudflare Pages project: static UI from ./public, API from ./functions.
+# Secret (not here): OPENAI_API_KEY — set with `npx wrangler pages secret put OPENAI_API_KEY`.
+name = "scratch-n-pray"
+pages_build_output_dir = "./public"
+compatibility_date = "2026-10-01"
+
+[vars]
+SP_TEXT_MODEL = "gpt-5.4-mini"
+SP_IMAGE_MODEL = "gpt-image-1.5"
+SP_IMAGE_QUALITY = "medium"
+SP_JACKPOT_ODDS = "10"
+DAILY_BUDGET_USD = "5"       # estimated; over it, tickets ship without art; at 1.2x the booth closes
+SP_IMAGE_COST_USD = "0.06"   # rough per-ticket estimates used for the budget counter
+SP_TEXT_COST_USD = "0.002"
+SP_IP_PER_MINUTE = "3"
+SP_IP_DAILY_LIMIT = "12"
+
+[[r2_buckets]]
+binding = "TICKETS"            # public ticket art + records, served at /generated/*
+bucket_name = "scratch-n-pray"
+
+[[r2_buckets]]
+binding = "RAW"                # private: request logs, rate-limit and budget counters
+bucket_name = "scratch-n-pray-raw"
