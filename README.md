@@ -6,6 +6,12 @@
 
 Tell the city what you need. Buy a ticket. Scratch the silver. Pray.
 
+<p align="center">
+  <img src="docs/example-ticket.jpg" width="340" alt="A half-scratched Scratch &amp; Pray ticket. Prayer: “I need knee surgery and I have no insurance.” Prize under the silver foil: YOU WON* One (1) free ambulance ride to the wrong borough.">
+  <br>
+  <em>Prayed for knee surgery. Won an ambulance ride to the wrong borough.</em>
+</p>
+
 ---
 
 ## Why this exists
@@ -87,6 +93,7 @@ Every ticket is saved to `generated/<id>.json` and `.png`.
 | `?force=win` / `?force=lose` | Override the RNG |
 | `?art=0` | Skip image generation (fast and cheap text-only iteration) |
 | `?replay=<id>` | Re-render a saved ticket from `generated/`, no API calls |
+| `&scratch=0.85` | With `replay`, pre-scratch the foil by that amount (for screenshots like the one above) |
 
 | Env | Default |
 |---|---|

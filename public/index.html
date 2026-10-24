@@ -341,6 +341,20 @@ function setupScratch(d) {
   ctx.lineWidth = W * 0.11;
   let last = null, moves = 0, done = false;
 
+  // Dev: &scratch=0.7 pre-scratches the foil with hand-like zigzags (for screenshots); 0–1 is how much of the middle to clear.
+  const pre = Number(params.get('scratch'));
+  if (pre > 0) {
+    const rows = Math.round(4 + pre * 6), m = (1 - pre) / 2 + .08;
+    for (let i = 0; i < rows; i++) {
+      const y = H * (m + (1 - 2 * m) * (i / (rows - 1)));
+      const [x0, x1] = i % 2 ? [W * (1 - m), W * m] : [W * m, W * (1 - m)];
+      const wob = () => (Math.random() - .5) * H * .05;
+      ctx.beginPath(); ctx.moveTo(x0, y + wob());
+      for (let s = 1; s <= 6; s++) ctx.lineTo(x0 + (x1 - x0) * s / 6, y + wob());
+      ctx.stroke();
+    }
+  }
+
   const pt = (e) => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) * dpr, (e.clientY - b.top) * dpr]; };
   const down = (e) => { cv.setPointerCapture(e.pointerId); last = pt(e); scratch(last, last); audio.start(); };
   const move = (e) => {
