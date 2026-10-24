@@ -120,4 +120,11 @@ npm run cf:dev                 # local Cloudflare build on :8788 (simulated R2, 
 
 ---
 
+## Credits
+
+- **Vincent Naples** and **Julia Vvedenskaya**, [VVEX Studio](https://github.com/vvexstudio): concepting and development
+- **Leonzo Vargas**: co-creator, naming and concept development
+
+---
+
 *Made with 🕯️ for the 3percentclub Spooky Hackathon. Prizes are not redeemable for cash, dignity, or a callback.*
